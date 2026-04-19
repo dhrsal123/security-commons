@@ -55,9 +55,6 @@ public class SecurityConfig {
         http
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-//                .securityMatcher(new NegatedServerWebExchangeMatcher(
-//                        new OrServerWebExchangeMatcher(pathMatchers(BLACKLIST_URL))
-//                ))
                 .csrf(csrf ->
                         csrf
                                 .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
