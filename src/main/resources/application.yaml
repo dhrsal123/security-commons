@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: security-commons
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://${KEYCLOAK_HOST}:8000/auth/realms/cinema-system
