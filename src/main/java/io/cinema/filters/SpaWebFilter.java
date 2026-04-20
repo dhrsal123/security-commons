@@ -23,7 +23,13 @@ public class SpaWebFilter implements WebFilter {
                         !path.startsWith("/v3/api-docs") &&
                         path.matches("[^\\\\.]*")
         ) {
-            return chain.filter(exchange.mutate().request(exchange.getRequest().mutate().path("/index.html").build()).build());
+            return chain.filter(
+                    exchange.mutate()
+                            .request(
+                                    exchange
+                                            .getRequest().mutate()
+                                            .path("/index.html").build()
+                            ).build());
         }
 
         return chain.filter(exchange);
