@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -20,11 +19,8 @@ import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfToken;
-import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.server.header.ReferrerPolicyServerHttpHeadersWriter;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
@@ -55,21 +51,7 @@ public class SecurityConfig {
         http
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-                .csrf(csrf ->
-                        csrf
-                                .csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse())
-                                .csrfTokenRequestHandler(new ServerCsrfTokenRequestAttributeHandler())
-                                .requireCsrfProtectionMatcher(exchange -> {
-                                    HttpMethod method = exchange.getRequest().getMethod();
-                                    if (HttpMethod.POST.equals(method) ||
-                                            HttpMethod.PUT.equals(method) ||
-                                            HttpMethod.DELETE.equals(method) ||
-                                            HttpMethod.PATCH.equals(method)) {
-                                        return ServerWebExchangeMatcher.MatchResult.match();
-                                    }
-                                    return ServerWebExchangeMatcher.MatchResult.notMatch();
-                                })
-                )
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .headers(headers ->
                         headers
                                 .referrerPolicy(
@@ -85,10 +67,16 @@ public class SecurityConfig {
                                 .frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable)
                 )
                 .addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .addFilterAt(this::csrfWebFilter, SecurityWebFiltersOrder.CSRF)
                 .authorizeExchange(exchange ->
                         exchange
-                                .pathMatchers("/api/csrf").permitAll()
+                                .pathMatchers(
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html",
+                                        "/webjars/**",
+                                        "/swagger"
+                                ).permitAll()
+                                .pathMatchers("/api/csrf", "/health").permitAll()
                                 .pathMatchers("/", "/*.hmtl", "/*.js", "/*.css", "/*.png", "/*.jpg").permitAll()
                                 .anyExchange().authenticated()
                 ).oauth2ResourceServer(oauth2 ->

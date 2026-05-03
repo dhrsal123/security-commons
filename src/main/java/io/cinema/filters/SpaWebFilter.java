@@ -15,6 +15,7 @@ public class SpaWebFilter implements WebFilter {
         String path = exchange.getRequest().getURI().getPath();
         if (
                 !path.startsWith("/api") &&
+                        !path.startsWith("/health") &&
                         !path.startsWith("/management") &&
                         !path.startsWith("/login") &&
                         !path.startsWith("/services") &&
