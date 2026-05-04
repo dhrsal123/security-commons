@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import static io.cinema.common.Constants.PERMISSIONS_POLICY;
@@ -47,7 +49,9 @@ public class SecurityConfig {
     private final JwtConverter converter;
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, Environment env) {
+        boolean isProd = Arrays.asList(env.getActiveProfiles()).contains("prod");
+
         http
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
@@ -67,19 +71,22 @@ public class SecurityConfig {
                                 .frameOptions(ServerHttpSecurity.HeaderSpec.FrameOptionsSpec::disable)
                 )
                 .addFilterAt(new SpaWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .authorizeExchange(exchange ->
-                        exchange
-                                .pathMatchers(
-                                        "/v3/api-docs/**",
+                .authorizeExchange(exchange -> {
+                            if (!isProd) {
+                                exchange.pathMatchers(
                                         "/swagger-ui/**",
-                                        "/swagger-ui.html",
-                                        "/webjars/**",
                                         "/swagger",
+                                        "/webjars/**",
+                                        "/v3/api-docs/**",
                                         "/openapi.yaml"
-                                ).permitAll()
-                                .pathMatchers("/api/csrf", "/health").permitAll()
-                                .pathMatchers("/", "/*.hmtl", "/*.js", "/*.css", "/*.png", "/*.jpg").permitAll()
-                                .anyExchange().authenticated()
+                                ).permitAll();
+                            }
+                            exchange
+                                    .pathMatchers("/api/csrf", "/health").permitAll()
+                                    .pathMatchers("/", "/*.hmtl", "/*.js", "/*.css", "/*.png", "/*.jpg")
+                                    .permitAll()
+                                    .anyExchange().authenticated();
+                        }
                 ).oauth2ResourceServer(oauth2 ->
                         oauth2.jwt(jwt ->
                                 jwt
