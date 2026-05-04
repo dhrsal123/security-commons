@@ -74,7 +74,8 @@ public class SecurityConfig {
                                         "/swagger-ui/**",
                                         "/swagger-ui.html",
                                         "/webjars/**",
-                                        "/swagger"
+                                        "/swagger",
+                                        "/openapi.yaml"
                                 ).permitAll()
                                 .pathMatchers("/api/csrf", "/health").permitAll()
                                 .pathMatchers("/", "/*.hmtl", "/*.js", "/*.css", "/*.png", "/*.jpg").permitAll()
